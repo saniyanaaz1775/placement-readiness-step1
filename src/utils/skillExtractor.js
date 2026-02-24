@@ -10,6 +10,28 @@ export function loadHistory() {
   }
 }
 
+export function loadHistoryWithStats() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return { entries: [], corrupted: 0 }
+    const arr = JSON.parse(raw)
+    if (!Array.isArray(arr)) return { entries: [], corrupted: 1 }
+    const entries = []
+    let corrupted = 0
+    arr.forEach((it) => {
+      if (it && it.id && it.createdAt && typeof it.jdText === 'string') {
+        entries.push(it)
+      } else {
+        corrupted += 1
+      }
+    })
+    return { entries, corrupted }
+  } catch (e) {
+    console.error('loadHistoryWithStats error', e)
+    return { entries: [], corrupted: 1 }
+  }
+}
+
 export function loadEntryById(id) {
   const h = loadHistory()
   return h.find((it) => it.id === id) || null
@@ -362,4 +384,72 @@ export default {
   loadEntryById,
   saveOrUpdateEntry,
   analyzeJob
+}
+
+// Build standardized history entry
+export function createHistoryEntry({ id, createdAt, company = '', role = '', jdText = '', analysisResult }) {
+  const now = createdAt || new Date().toISOString()
+  const uid = id || (Date.now().toString())
+  const res = analysisResult || analyzeJob({ company, role, jdText })
+
+  // normalize skills to standard keys
+  const skills = {
+    coreCS: res.skills.core ? res.skills.core.slice() : [],
+    languages: res.skills.languages ? res.skills.languages.slice() : [],
+    web: res.skills.web ? res.skills.web.slice() : [],
+    data: res.skills.data ? res.skills.data.slice() : [],
+    cloud: res.skills.cloud ? res.skills.cloud.slice() : [],
+    testing: res.skills.testing ? res.skills.testing.slice() : [],
+    other: []
+  }
+
+  // If nothing detected, populate other with defaults
+  const anyDetected = Object.values(skills).some((arr) => arr.length > 0)
+  if (!anyDetected) {
+    skills.other = ['Communication', 'Problem solving', 'Basic coding', 'Projects']
+  }
+
+  // checklist -> array [{ roundTitle, items }]
+  const checklistArray = []
+  if (res.checklist && typeof res.checklist === 'object') {
+    Object.entries(res.checklist).forEach(([roundTitle, items]) => {
+      checklistArray.push({ roundTitle, items: items.slice() })
+    })
+  }
+
+  // plan7Days -> { day, focus, tasks[] }
+  const plan7Days = (res.plan || []).map((p) => ({
+    day: p.day,
+    focus: p.title || p.title,
+    tasks: []
+  }))
+
+  // roundMapping normalize { roundTitle, focusAreas[], whyItMatters }
+  const roundMapping = (res.roundMapping || []).map((r) => ({
+    roundTitle: r.title || r.roundTitle || '',
+    focusAreas: r.focusAreas || [],
+    whyItMatters: r.why || r.whyItMatters || ''
+  }))
+
+  const entry = {
+    id: uid,
+    createdAt: now,
+    company: company || '',
+    role: role || '',
+    jdText: jdText || '',
+    extractedSkills: skills,
+    roundMapping,
+    checklist: checklistArray,
+    plan7Days,
+    questions: res.questions ? res.questions.slice() : [],
+    baseScore: Number(res.score || 0),
+    skillConfidenceMap: {},
+    finalScore: Number(res.score || 0),
+    updatedAt: now,
+    companyIntel: res.companyIntel || null
+  }
+
+  // persist using saveOrUpdateEntry to ensure dedupe
+  saveOrUpdateEntry(entry)
+  return entry
 }

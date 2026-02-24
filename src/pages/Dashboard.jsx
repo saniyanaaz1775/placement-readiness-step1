@@ -8,6 +8,7 @@ import {
   PolarRadiusAxis,
   Radar
 } from 'recharts'
+import { analyzeJob, createHistoryEntry } from '../utils/skillExtractor'
 
 const radarData = [
   { subject: 'DSA', A: 75 },
@@ -241,29 +242,26 @@ export default function Dashboard() {
   }
 
   function analyze() {
-    const extracted = extractSkills(jdText)
-    const checklist = generateChecklist(extracted)
-    const plan = generatePlan(extracted)
-    const questions = generateQuestions(extracted)
-    const score = calculateReadiness(extracted, company, role, jdText)
-
-    const entry = {
+    // validation: JD required
+    if (!jdText || jdText.trim().length === 0) {
+      alert('Job description is required for analysis.')
+      return
+    }
+    if (jdText.trim().length < 200) {
+      alert('This JD is too short to analyze deeply. Paste full JD for better output.')
+    }
+    const res = analyzeJob({ company, role, jdText })
+    const entry = createHistoryEntry({
       id: `${Date.now()}`,
       createdAt: new Date().toISOString(),
       company,
       role,
       jdText,
-      extractedSkills: extracted,
-      plan,
-      checklist,
-      questions,
-      readinessScore: score
-    }
-
+      analysisResult: res
+    })
     setResult(entry)
     setHistory((h) => [entry, ...h])
     setSelectedId(entry.id)
-    // persist handled by effect
   }
 
   function loadHistoryItem(id) {
@@ -342,7 +340,7 @@ export default function Dashboard() {
                   >
                     <div className="text-sm font-medium">{h.company || 'Unknown Company'}</div>
                     <div className="text-xs text-gray-500">{h.role || '(no role)'} • {new Date(h.createdAt).toLocaleString()}</div>
-                    <div className="text-xs text-gray-700 mt-1">Score: {h.readinessScore}</div>
+                    <div className="text-xs text-gray-700 mt-1">Score: {h.finalScore ?? h.baseScore}</div>
                   </div>
                 ))}
               </div>
@@ -358,7 +356,7 @@ export default function Dashboard() {
                   <div className="text-sm text-gray-500">{result.company}</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold">{result.readinessScore}</div>
+                  <div className="text-2xl font-bold">{result.finalScore ?? result.baseScore}</div>
                   <div className="text-xs text-gray-500">Readiness Score</div>
                 </div>
               </div>
@@ -366,11 +364,11 @@ export default function Dashboard() {
               <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="md:col-span-1">
                   <h5 className="font-semibold">Key skills</h5>
-                  {Object.keys(result.extractedSkills).map((cat) => (
+                    {Object.keys(result.extractedSkills).map((cat) => (
                     <div key={cat} className="mt-2">
                       <div className="text-sm font-medium">{cat}</div>
                       <div className="mt-1 flex flex-wrap gap-2">
-                        {result.extractedSkills[cat].map((s) => (
+                        {(result.extractedSkills[cat] || []).map((s) => (
                           <span key={s} className="text-xs px-2 py-1 bg-gray-100 rounded-full">{s}</span>
                         ))}
                       </div>
@@ -381,8 +379,8 @@ export default function Dashboard() {
                 <div className="md:col-span-1">
                   <h5 className="font-semibold">7-day plan</h5>
                   <ol className="mt-2 list-decimal list-inside text-sm">
-                    {result.plan.map((p) => (
-                      <li key={p.day} className="mb-1">{p.title}</li>
+                    {(result.plan7Days || []).map((p) => (
+                      <li key={p.day} className="mb-1">{p.focus}</li>
                     ))}
                   </ol>
                 </div>

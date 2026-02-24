@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import Card from '../components/Card'
-import { loadHistory, loadEntryById, saveOrUpdateEntry } from '../utils/skillExtractor'
+import { loadHistoryWithStats, loadEntryById, saveOrUpdateEntry } from '../utils/skillExtractor'
 import { useLocation, useNavigate } from 'react-router-dom'
 
 function useQuery() {
@@ -27,8 +27,21 @@ export default function Results() {
       const e = loadEntryById(id)
       setEntry(e || null)
     } else {
-      const h = loadHistory()
-      setEntry(h.length ? h[0] : null)
+      const res = loadHistoryWithStats()
+      if (res.corrupted && res.corrupted > 0) {
+        // show a simple placeholder; still load valid entries
+        // keep a window flag to show message
+        // we'll attach to entry state as a special field
+        const valid = res.entries
+        setEntry(valid.length ? valid[0] : null)
+        if (res.corrupted > 0) {
+          // attach a property to trigger UI message
+          const e = valid.length ? { ...valid[0], _corruptedCount: res.corrupted } : null
+          setEntry(e)
+        }
+      } else {
+        setEntry(res.entries.length ? res.entries[0] : null)
+      }
     }
   }, [id])
 
@@ -47,7 +60,7 @@ export default function Results() {
     })
     setSkillConfidenceMap(map)
     // compute adjusted score
-    const base = entry.readinessScore || entry.readinessScore || 35
+    const base = entry.baseScore ?? 35
     const calc = computeAdjustedScore(base, map)
     setAdjustedScore(calc)
   }, [entry])
@@ -55,11 +68,11 @@ export default function Results() {
   // recompute adjusted score when map changes and persist
   useEffect(() => {
     if (!entry) return
-    const base = entry.readinessScore || 35
+    const base = entry.baseScore ?? 35
     const score = computeAdjustedScore(base, skillConfidenceMap)
     setAdjustedScore(score)
-    // persist to storage: update entry with new map and adjusted score
-    const updated = { ...entry, skillConfidenceMap: { ...skillConfidenceMap }, readinessScoreAdjusted: score }
+    // persist to storage: update entry with new map and finalScore and updatedAt
+    const updated = { ...entry, skillConfidenceMap: { ...skillConfidenceMap }, finalScore: score, updatedAt: new Date().toISOString() }
     saveOrUpdateEntry(updated)
     // also update local state entry so UI reflects persisted version
     setEntry(updated)
@@ -97,6 +110,11 @@ export default function Results() {
 
   return (
     <div className="space-y-4">
+      {entry._corruptedCount ? (
+        <Card>
+          <div className="text-sm text-yellow-700">One saved entry couldn't be loaded. Create a new analysis.</div>
+        </Card>
+      ) : null}
       <Card>
         <div className="flex items-center justify-between">
           <div>
@@ -104,7 +122,7 @@ export default function Results() {
             <div className="text-xl font-semibold">{entry.company || 'Unknown Company'}</div>
             <div className="text-sm text-gray-600">{entry.role || '—'}</div>
           </div>
-          <div className="text-3xl font-bold">{adjustedScore ?? entry.readinessScore}</div>
+          <div className="text-3xl font-bold">{adjustedScore ?? entry.finalScore ?? entry.baseScore}</div>
         </div>
       </Card>
 
@@ -137,8 +155,8 @@ export default function Results() {
               <div key={idx} className="flex gap-4 items-start mb-4">
                 <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-medium">{idx+1}</div>
                 <div>
-                  <div className="font-medium">{r.title}</div>
-                  <div className="text-sm text-gray-600 mt-1">Why this round matters: {r.why}</div>
+                  <div className="font-medium">{r.roundTitle || r.title}</div>
+                  <div className="text-sm text-gray-600 mt-1">Why this round matters: {r.whyItMatters || r.why}</div>
                 </div>
               </div>
             ))}
@@ -190,7 +208,7 @@ export default function Results() {
           <button
             className="px-3 py-1 border rounded"
             onClick={() => {
-              const text = entry.plan.map((d) => `Day ${d.day}: ${d.title}`).join('\n')
+              const text = (entry.plan7Days || []).map((d) => `Day ${d.day}: ${d.focus}`).join('\n')
               navigator.clipboard.writeText(text)
             }}
           >
@@ -200,9 +218,7 @@ export default function Results() {
             className="px-3 py-1 border rounded"
             onClick={() => {
               // flatten checklist sections
-              const txt = Object.entries(entry.checklist)
-                .map(([r, items]) => `${r}:\n- ${items.join('\n- ')}`)
-                .join('\n\n')
+              const txt = (entry.checklist || []).map((c) => `${c.roundTitle}:\n- ${c.items.join('\n- ')}`).join('\n\n')
               navigator.clipboard.writeText(txt)
             }}
           >
@@ -223,19 +239,17 @@ export default function Results() {
               const parts = []
               parts.push(`Company: ${entry.company || ''}`)
               parts.push(`Role: ${entry.role || ''}`)
-              parts.push(`Readiness Score: ${adjustedScore ?? entry.readinessScore}`)
+              parts.push(`Readiness Score: ${adjustedScore ?? entry.finalScore ?? entry.baseScore}`)
               parts.push('\nKey skills:')
               Object.entries(entry.extractedSkills).forEach(([cat, arr]) => {
                 parts.push(`${cat}: ${arr.join(', ')}`)
               })
               parts.push('\n7-day plan:')
-              parts.push(...entry.plan.map((d) => `Day ${d.day}: ${d.title}`))
+              parts.push(...(entry.plan7Days || []).map((d) => `Day ${d.day}: ${d.focus}`))
               parts.push('\nRound checklist:')
-              Object.entries(entry.checklist).forEach(([r, items]) => {
-                parts.push(`${r}:\n- ${items.join('\n- ')}`)
-              })
+              parts.push(...(entry.checklist || []).map((c) => `${c.roundTitle}:\n- ${c.items.join('\n- ')}`))
               parts.push('\nQuestions:')
-              parts.push(...entry.questions.map((q, i) => `${i + 1}. ${q}`))
+              parts.push(...(entry.questions || []).map((q, i) => `${i + 1}. ${q}`))
               const blob = new Blob([parts.join('\n\n')], { type: 'text/plain' })
               const url = URL.createObjectURL(blob)
               const a = document.createElement('a')
@@ -255,14 +269,14 @@ export default function Results() {
       <Card>
         <h4 className="font-semibold mb-2">7-Day Plan</h4>
         <ol className="list-decimal ml-5">
-          {entry.plan.map((d)=> <li key={d.day}>{`Day ${d.day}: ${d.title}`}</li>)}
+          {(entry.plan7Days || []).map((d)=> <li key={d.day}>{`Day ${d.day}: ${d.focus}`}</li>)}
         </ol>
       </Card>
 
       <Card>
         <h4 className="font-semibold mb-2">Interview Questions</h4>
         <ol className="list-decimal ml-5">
-          {entry.questions.map((q,idx)=> <li key={idx}>{q}</li>)}
+          {(entry.questions || []).map((q,idx)=> <li key={idx}>{q}</li>)}
         </ol>
       </Card>
     </div>

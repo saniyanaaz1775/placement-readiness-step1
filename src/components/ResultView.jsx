@@ -13,7 +13,7 @@ export default function ResultView({ result }) {
           <div className="text-sm text-gray-500">{result.company}</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold">{result.readinessScore}</div>
+          <div className="text-2xl font-bold">{result.finalScore ?? result.baseScore}</div>
           <div className="text-xs text-gray-500">Readiness Score</div>
         </div>
       </div>
@@ -36,8 +36,8 @@ export default function ResultView({ result }) {
         <div className="md:col-span-1">
           <h5 className="font-semibold">7-day plan</h5>
           <ol className="mt-2 list-decimal list-inside text-sm">
-            {result.plan.map((p) => (
-              <li key={p.day} className="mb-1">{p.title}</li>
+            {result.plan7Days.map((p) => (
+              <li key={p.day} className="mb-1">{p.focus}</li>
             ))}
           </ol>
         </div>
