@@ -1,0 +1,179 @@
+:root {
+  /* Colors */
+  --kn-bg: #F7F6F3;
+  --kn-text: #111111;
+  --kn-accent: #8B0000;
+  --kn-neutral: #E6E2DD;
+
+  /* Semantic (used sparingly) */
+  --kn-success: #6B8E6B;
+  --kn-warning: #B78A3B;
+
+  /* Typography */
+  --kn-heading-font: "Merriweather", Georgia, serif;
+  --kn-body-font: "Inter", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --kn-body-size: 16px;
+  --kn-body-line-height: 1.7;
+  --kn-max-text-width: 720px;
+
+  /* Spacing scale */
+  --kn-space-1: 8px;
+  --kn-space-2: 16px;
+  --kn-space-3: 24px;
+  --kn-space-4: 40px;
+  --kn-space-5: 64px;
+
+  /* Other */
+  --kn-radius: 8px;
+  --kn-transition: 180ms ease-in-out;
+  --kn-border: 1px solid var(--kn-neutral);
+}
+
+html,body{height:100%}
+body {
+  margin: 0;
+  font-family: var(--kn-body-font);
+  font-size: var(--kn-body-size);
+  line-height: var(--kn-body-line-height);
+  color: var(--kn-text);
+  background: var(--kn-bg);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+.kn-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--kn-space-2);
+  border-bottom: var(--kn-border);
+  gap: var(--kn-space-3);
+}
+.kn-topbar .project {
+  font-family: var(--kn-heading-font);
+  font-weight: 600;
+  font-size: 18px;
+}
+.kn-topbar .progress {
+  font-size: 14px;
+  color: var(--kn-text);
+  opacity: 0.8;
+}
+.kn-topbar .status-badge {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  background: transparent;
+  border: 1px solid var(--kn-neutral);
+}
+
+.kn-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.kn-main {
+  display: grid;
+  grid-template-columns: 70% 30%;
+  gap: var(--kn-space-4);
+  padding: var(--kn-space-3);
+  flex: 1 0 auto;
+}
+.kn-primary { width: 100%; }
+.kn-secondary { width: 100%; }
+
+.kn-context-header {
+  padding: var(--kn-space-3);
+  border-bottom: var(--kn-border);
+}
+.kn-context-header h1 {
+  margin: 0;
+  font-family: var(--kn-heading-font);
+  font-size: 28px;
+  line-height: 1.1;
+  color: var(--kn-text);
+}
+.kn-context-header p {
+  margin-top: var(--kn-space-1);
+  margin-bottom: 0;
+  max-width: var(--kn-max-text-width);
+  color: var(--kn-text);
+  opacity: 0.8;
+}
+
+.kn-card {
+  background: white;
+  border: var(--kn-border);
+  border-radius: var(--kn-radius);
+  padding: var(--kn-space-3);
+  box-sizing: border-box;
+}
+
+.kn-btn {
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: var(--kn-radius);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background var(--kn-transition), border-color var(--kn-transition), color var(--kn-transition);
+  border: 1px solid transparent;
+  text-decoration: none;
+  color: white;
+  background: var(--kn-accent);
+}
+.kn-btn:focus { outline: 3px solid rgba(139,0,0,0.12); outline-offset: 2px; }
+.kn-btn:hover { filter: brightness(0.94); }
+
+.kn-btn--secondary {
+  background: transparent;
+  color: var(--kn-text);
+  border: 1px solid var(--kn-accent);
+}
+.kn-btn--secondary:hover { background: rgba(139,0,0,0.04); }
+
+.kn-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--kn-neutral);
+  font-size: 15px;
+  transition: box-shadow var(--kn-transition), border-color var(--kn-transition);
+  background: #fff;
+  color: var(--kn-text);
+}
+.kn-input:focus {
+  border-color: var(--kn-accent);
+  box-shadow: 0 0 0 3px rgba(139,0,0,0.06);
+  outline: none;
+}
+
+.kn-prompt {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace;
+  background: #F4F3F1;
+  border: 1px solid var(--kn-neutral);
+  padding: var(--kn-space-2);
+  border-radius: 6px;
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+
+.kn-proof-footer {
+  border-top: var(--kn-border);
+  padding: var(--kn-space-2);
+  display:flex;
+  gap: var(--kn-space-3);
+  align-items:center;
+  justify-content:flex-start;
+  background: var(--kn-bg);
+  position: sticky;
+  bottom: 0;
+}
+
+.kn-badge--in-progress { color: var(--kn-text); background: rgba(139,0,0,0.06); border: 1px solid rgba(139,0,0,0.12); }
+.kn-badge--shipped { color: #fff; background: var(--kn-accent); border: none; }
+
+.u-mt-2 { margin-top: var(--kn-space-2); }
+

@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root{
+  --kn-bg: #F7F6F3;
+  --kn-text: #111111;
+  --kn-accent: #8B0000;
+}
+
+body {
+  background-color: white;
+  color: var(--kn-text);
+}
+
+/* small utility for primary color text */
+.text-primary { color: theme('colors.primary'); }
+.bg-primary { background-color: theme('colors.primary'); }
+
+/* Ensure serif headings */
+.font-serif { font-family: 'Merriweather', Georgia, serif; }
+
