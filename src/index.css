@@ -20,3 +20,16 @@ body {
 /* Ensure serif headings */
 .font-serif { font-family: 'Merriweather', Georgia, serif; }
 
+/* Circular progress stroke transition */
+.circle-progress {
+  transition: stroke-dashoffset 800ms ease-in-out;
+  transform-origin: 50% 50%;
+  transform: rotate(0.25turn);
+}
+
+/* primary color utilities fallback when Tailwind theme() is not available */
+.text-primary { color: #6b21a8; }
+.bg-primary { background-color: #6b21a8; }
+
+.day-circle { width: 2rem; height: 2rem; border-radius: 9999px; }
+
