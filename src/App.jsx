@@ -10,6 +10,8 @@ import Profile from './pages/Profile'
 import Analyze from './pages/Analyze'
 import Results from './pages/Results'
 import History from './pages/History'
+import TestChecklist from './pages/TestChecklist'
+import Ship from './pages/Ship'
 
 export default function App() {
   return (
@@ -26,6 +28,12 @@ export default function App() {
         <Route path="assessments" element={<Assessments />} />
         <Route path="resources" element={<Resources />} />
         <Route path="profile" element={<Profile />} />
+      </Route>
+      <Route path="/prp/07-test" element={<AppShell />}>
+        <Route index element={<TestChecklist />} />
+      </Route>
+      <Route path="/prp/08-ship" element={<AppShell />}>
+        <Route index element={<Ship />} />
       </Route>
     </Routes>
   )
