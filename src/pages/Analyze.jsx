@@ -1,23 +1,6 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
-
-export default function Analyze() {
-  return (
-    <div className="p-6">
-      <h2 className="text-2xl font-semibold">Analyze</h2>
-      <p className="mt-3 text-gray-600">
-        Analysis tools are on the Dashboard. Click below to go there and paste a job description to analyze.
-      </p>
-      <div className="mt-4">
-        <Link to="/dashboard" className="px-4 py-2 bg-primary text-white rounded-md">Go to Dashboard</Link>
-      </div>
-    </div>
-  )
-}
-
 import React, { useState } from 'react'
 import Card from '../components/Card'
-import { analyzeJob, saveEntry } from '../utils/skillExtractor'
+import { analyzeJob, saveOrUpdateEntry } from '../utils/skillExtractor'
 
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2,8)
@@ -43,12 +26,12 @@ export default function Analyze() {
       questions: res.questions,
       readinessScore: res.score
     }
-    saveEntry(entry)
+    saveOrUpdateEntry(entry)
     setResult(entry)
   }
 
   return (
-    <div>
+    <div className="p-6">
       <h2 className="text-2xl font-semibold mb-4">Job Description Analyzer</h2>
       <Card className="mb-6">
         <div className="grid grid-cols-1 gap-4">
