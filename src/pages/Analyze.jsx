@@ -24,7 +24,9 @@ export default function Analyze() {
       plan: res.plan,
       checklist: res.checklist,
       questions: res.questions,
-      readinessScore: res.score
+      readinessScore: res.score,
+      companyIntel: res.companyIntel,
+      roundMapping: res.roundMapping
     }
     saveOrUpdateEntry(entry)
     setResult(entry)

@@ -108,6 +108,44 @@ export default function Results() {
         </div>
       </Card>
 
+      {entry.companyIntel && (
+        <Card>
+          <h4 className="font-semibold mb-2">Company Intel <span className="text-xs text-gray-500 ml-2">Demo Mode</span></h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <div className="text-sm font-medium">Industry</div>
+              <div className="text-sm text-gray-700">{entry.companyIntel.industry}</div>
+            </div>
+            <div>
+              <div className="text-sm font-medium">Estimated size</div>
+              <div className="text-sm text-gray-700">{entry.companyIntel.sizeCategory}</div>
+            </div>
+            <div>
+              <div className="text-sm font-medium">Typical Hiring Focus</div>
+              <div className="text-sm text-gray-700">{entry.companyIntel.hiringFocus}</div>
+            </div>
+          </div>
+          <div className="mt-3 text-xs text-gray-500">{entry.companyIntel.note}</div>
+        </Card>
+      )}
+
+      {entry.roundMapping && (
+        <Card>
+          <h4 className="font-semibold mb-3">Round Mapping</h4>
+          <div className="flex flex-col">
+            {entry.roundMapping.map((r, idx) => (
+              <div key={idx} className="flex gap-4 items-start mb-4">
+                <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-medium">{idx+1}</div>
+                <div>
+                  <div className="font-medium">{r.title}</div>
+                  <div className="text-sm text-gray-600 mt-1">Why this round matters: {r.why}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
       <Card>
         <h4 className="font-semibold mb-2">Extracted Skills</h4>
         <div className="flex flex-wrap gap-3">

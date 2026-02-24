@@ -221,13 +221,140 @@ function readinessScore({ skills, company, role, jdText }) {
   return Math.min(100, score)
 }
 
+// Company intel heuristics
+function generateCompanyIntel(company = '', skills = {}) {
+  const name = (company || '').trim()
+  const knownEnterprises = ['amazon','google','microsoft','ibm','infosys','tcs','wipro','accenture','cognizant']
+  const lower = name.toLowerCase()
+  let sizeCategory = 'Startup'
+  let industry = 'Technology Services'
+
+  if (!name) {
+    return {
+      name: '',
+      industry,
+      sizeCategory,
+      hiringFocus: 'Practical problem solving + stack depth',
+      note: 'Demo Mode: Company intel generated heuristically.'
+    }
+  }
+
+  // simple industry guesses
+  if (lower.includes('bank') || lower.includes('finance') || lower.includes('capital')) industry = 'Financial Services'
+  if (lower.includes('health') || lower.includes('clinic') || lower.includes('hospital')) industry = 'Healthcare'
+  if (lower.includes('analytics') || lower.includes('data')) industry = 'Analytics'
+
+  // size heuristics: known list => Enterprise
+  if (knownEnterprises.some(k => lower.includes(k))) {
+    sizeCategory = 'Enterprise'
+  } else {
+    // fallback: treat unknown as Startup
+    sizeCategory = 'Startup'
+  }
+
+  const hiringFocus = sizeCategory === 'Enterprise'
+    ? 'Structured DSA + core fundamentals'
+    : 'Practical problem solving + stack depth'
+
+  return {
+    name,
+    industry,
+    sizeCategory,
+    hiringFocus,
+    note: 'Demo Mode: Company intel generated heuristically.'
+  }
+}
+
+// Round mapping generator
+function generateRoundMapping(companyIntel, skills) {
+  const rounds = []
+  const size = (companyIntel && companyIntel.sizeCategory) || 'Startup'
+  const hasCore = !!skills.core
+  const hasWeb = !!skills.web
+
+  if (size === 'Enterprise') {
+    rounds.push({
+      title: 'Round 1: Online Test (DSA + Aptitude)',
+      why: 'Standardized screening for large applicant pools; focuses on algorithmic skills and speed.'
+    })
+    rounds.push({
+      title: 'Round 2: Technical (DSA + Core CS)',
+      why: 'Deep evaluation of algorithms, data structures and system fundamentals.'
+    })
+    rounds.push({
+      title: 'Round 3: Tech + Projects',
+      why: 'Assess practical engineering, system design and code quality in context of real projects.'
+    })
+    rounds.push({
+      title: 'Round 4: HR / Managerial',
+      why: 'Behavioral fit, communication and organizational fit.'
+    })
+  } else if (size === 'Mid-size') {
+    rounds.push({
+      title: 'Round 1: Coding exercise',
+      why: 'Practical coding task to assess hands-on ability.'
+    })
+    rounds.push({
+      title: 'Round 2: Technical interview',
+      why: 'System & stack knowledge relevant to role.'
+    })
+    rounds.push({
+      title: 'Round 3: HR',
+      why: 'Fit and expectations.'
+    })
+  } else { // Startup
+    if (hasWeb) {
+      rounds.push({
+        title: 'Round 1: Practical coding (take-home or live)',
+        why: 'Startups prioritize practical ability to ship features quickly.'
+      })
+      rounds.push({
+        title: 'Round 2: System discussion',
+        why: 'Discuss architecture, trade-offs and ownership.'
+      })
+      rounds.push({
+        title: 'Round 3: Culture / Fit',
+        why: 'Small teams need strong collaboration and adaptability.'
+      })
+    } else if (hasCore) {
+      rounds.push({
+        title: 'Round 1: Coding exercise',
+        why: 'Problem-solving skills to validate fundamentals.'
+      })
+      rounds.push({
+        title: 'Round 2: Technical deep-dive',
+        why: 'Focus on algorithms and core CS concepts.'
+      })
+      rounds.push({
+        title: 'Round 3: HR / Founders chat',
+        why: 'Evaluate long-term fit and motivation.'
+      })
+    } else {
+      rounds.push({
+        title: 'Round 1: Practical assessment',
+        why: 'General evaluation of applied skills.'
+      })
+      rounds.push({
+        title: 'Round 2: Technical discussion',
+        why: 'Role-specific technical evaluation.'
+      })
+      rounds.push({
+        title: 'Round 3: HR',
+        why: 'Fit and culture.'
+      })
+    }
+  }
+  return rounds
+}
 export function analyzeJob({ company = '', role = '', jdText = '' }) {
   const skills = extractSkills(jdText)
   const checklist = makeChecklist(skills)
   const plan = makePlan(skills)
   const questions = makeQuestions(skills)
   const score = readinessScore({ skills, company, role, jdText })
-  return { skills, checklist, plan, questions, score }
+  const companyIntel = generateCompanyIntel(company, skills)
+  const roundMapping = generateRoundMapping(companyIntel, skills)
+  return { skills, checklist, plan, questions, score, companyIntel, roundMapping }
 }
 
 export default {
