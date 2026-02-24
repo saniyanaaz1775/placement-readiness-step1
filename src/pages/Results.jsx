@@ -1,36 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import Card from '../components/Card'
-import ResultView from '../components/ResultView'
-
-const STORAGE_KEY = 'prp_history_v1'
-
-export default function Results() {
-  const [latest, setLatest] = useState(null)
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY)
-      if (raw) {
-        const arr = JSON.parse(raw)
-        if (arr && arr.length) setLatest(arr[0])
-      }
-    } catch (e) {
-      console.error(e)
-    }
-  }, [])
-
-  return (
-    <div className="p-6">
-      <Card>
-        <h2 className="text-xl font-semibold mb-4">Latest Analysis Result</h2>
-        <ResultView result={latest} />
-      </Card>
-    </div>
-  )
-}
-
-import React, { useEffect, useState } from 'react'
-import Card from '../components/Card'
 import { loadHistory, loadEntryById } from '../utils/skillExtractor'
 import { useLocation, useNavigate } from 'react-router-dom'
 

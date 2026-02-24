@@ -1,3 +1,29 @@
+const STORAGE_KEY = 'prp_history_v1'
+
+export function loadHistory() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return []
+    return JSON.parse(raw)
+  } catch (e) {
+    console.error('loadHistory error', e)
+    return []
+  }
+}
+
+export function loadEntryById(id) {
+  const h = loadHistory()
+  return h.find((it) => it.id === id) || null
+}
+
+export function saveEntry(entry) {
+  const h = loadHistory()
+  h.unshift(entry)
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(h))
+}
+
+export default { loadHistory, loadEntryById, saveEntry }
+
 // Simple keyword-based skill extractor and planner generator
 const CATEGORIES = {
   core: ['DSA','OOP','DBMS','OS','Networks'],
