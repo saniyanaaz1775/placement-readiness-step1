@@ -3,8 +3,7 @@ const STORAGE_KEY = 'prp_history_v1'
 export function loadHistory() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return []
-    return JSON.parse(raw)
+    return raw ? JSON.parse(raw) : []
   } catch (e) {
     console.error('loadHistory error', e)
     return []
@@ -16,13 +15,20 @@ export function loadEntryById(id) {
   return h.find((it) => it.id === id) || null
 }
 
-export function saveEntry(entry) {
-  const h = loadHistory()
-  h.unshift(entry)
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(h))
+export function saveOrUpdateEntry(entry) {
+  try {
+    const arr = loadHistory()
+    const idx = arr.findIndex((e) => e.id === entry.id)
+    if (idx >= 0) {
+      arr[idx] = entry
+    } else {
+      arr.unshift(entry)
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr))
+  } catch (e) {
+    console.error('saveOrUpdateEntry error', e)
+  }
 }
-
-export default { loadHistory, loadEntryById, saveEntry }
 
 // Simple keyword-based skill extractor and planner generator
 const CATEGORIES = {
@@ -36,22 +42,17 @@ const CATEGORIES = {
 
 function findKeywords(text) {
   const found = {}
-  const lower = text.toLowerCase()
   Object.entries(CATEGORIES).forEach(([cat, arr]) => {
     found[cat] = []
     arr.forEach((kw) => {
-      const plain = kw.toLowerCase().replace('.', '\\.')
+      const plain = kw.replace('.', '\\.')
       const re = new RegExp(`\\b${plain}\\b`, 'i')
-      if (re.test(text)) {
+      if (re.test(text || '')) {
         found[cat].push(kw)
       }
     })
   })
   return found
-}
-
-function anyDetected(found) {
-  return Object.values(found).some((arr) => arr.length > 0)
 }
 
 function extractSkills(jdText) {
@@ -67,7 +68,6 @@ function extractSkills(jdText) {
 }
 
 function makeChecklist(skills) {
-  // Template items per category
   const templates = {
     core: [
       'Review data structures fundamentals',
@@ -127,16 +127,13 @@ function makeChecklist(skills) {
     'Round 4: Managerial / HR': []
   }
 
-  // Fill each round with items based on detected skills
   const cats = Object.keys(skills)
-  // Round 1 generic items
   rounds['Round 1: Aptitude / Basics'] = [
     'Basic math & logical reasoning',
     'Time management for problem solving',
     'Simple coding exercises (arrays/strings)'
   ].concat(templates.general.slice(0,2))
 
-  // Round 2: core + languages + data
   cats.forEach((cat) => {
     if (['core','languages','data'].includes(cat)) {
       rounds['Round 2: DSA + Core CS'].push(...templates[cat].slice(0,3))
@@ -153,10 +150,8 @@ function makeChecklist(skills) {
     rounds['Round 3: Tech interview (projects + stack)'].push(...templates.testing.slice(0,2))
   }
 
-  // Ensure at least 5 items in rounds 2 and 3
   Object.keys(rounds).forEach((r) => {
     if (rounds[r].length < 5) {
-      // push general items to reach 5
       rounds[r] = rounds[r].concat(templates.general).slice(0, Math.max(5, rounds[r].length))
     }
   })
@@ -174,7 +169,6 @@ function makePlan(skills) {
     { day: 6, title: 'Mock interviews' },
     { day: 7, title: 'Revision & weak areas' }
   ]
-  // adapt for detected skills
   if (skills.web) {
     base[4].title = 'Project: frontend + resume alignment'
     base[5].title = 'Mock interviews (frontend focus)'
@@ -211,7 +205,6 @@ function makeQuestions(skills) {
   if (skills.testing) {
     qs.push('How do you design end-to-end tests for a web application?')
   }
-  // Ensure 10 questions
   while (qs.length < 10) {
     qs.push('Describe a time you solved a hard bug and how you approached it.')
   }
@@ -221,7 +214,7 @@ function makeQuestions(skills) {
 function readinessScore({ skills, company, role, jdText }) {
   let score = 35
   const categories = Object.keys(skills)
-  score += Math.min(6, categories.length) * 5 // +5 per category up to 6 categories (max +30)
+  score += Math.min(6, categories.length) * 5
   if (company) score += 10
   if (role) score += 10
   if ((jdText || '').length > 800) score += 10
@@ -237,22 +230,9 @@ export function analyzeJob({ company = '', role = '', jdText = '' }) {
   return { skills, checklist, plan, questions, score }
 }
 
-export function saveEntry(entry) {
-  const key = 'prp_history'
-  const raw = localStorage.getItem(key)
-  const arr = raw ? JSON.parse(raw) : []
-  arr.unshift(entry)
-  localStorage.setItem(key, JSON.stringify(arr))
+export default {
+  loadHistory,
+  loadEntryById,
+  saveOrUpdateEntry,
+  analyzeJob
 }
-
-export function loadHistory() {
-  const key = 'prp_history'
-  const raw = localStorage.getItem(key)
-  return raw ? JSON.parse(raw) : []
-}
-
-export function loadEntryById(id) {
-  const h = loadHistory()
-  return h.find((e) => e.id === id)
-}
-
